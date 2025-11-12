@@ -255,8 +255,8 @@ body {
 }
 
 .highlight {
-  border-top: blue;
-  border-width: 20px;
+  border-top: black;
+  border-width: 5px;
 }
 
 .description {

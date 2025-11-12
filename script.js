@@ -100,8 +100,12 @@ async function displayProducts(products) {
         SPList.appendChild(el);
         el.id = `S${current.id}`
         el.addEventListener("click", (e) => {
-          current.classList.remove("highlight");
-          s = document.getElementById(`S${current.id}`)
+          Name = e.currentTarget.id.slice(1)
+          p = document.getElementById(Name)
+          s = document.getElementById(`S${Name}`)
+
+          p.classList.remove("highlight");
+
           s.remove()
           localStorage.removeItem(current.id)
         })
@@ -161,10 +165,130 @@ categoryFilter.addEventListener("change", async (e) => {
   displayProducts(filteredProducts);
 });
 
-/* Chat form submission handler - placeholder for OpenAI integration */
-chatForm.addEventListener("submit", (e) => {
+
+
+
+chatWindow.textContent = "👋 Hello! How can I help you today?";
+
+let messages = [
+  {
+    role: 'system', content: `You are a sassy L'oreal branded chatbot that helps customers navigate L'Oréal's extensive product catalog and receive tailored recommendations, If a user's query is unrelated to L'Oreal products, respond by stating that you do not know. If the user has not picked products for the routine you should suggust that they pick them out from the selection above.`
+  }
+];
+
+//worker URL
+const workerUrl = "https://hidden-bar-6e99.jacksonr1019.workers.dev/"
+
+
+button = document.getElementById("generateRoutine");
+
+button.addEventListener("click", async (e) => {
   e.preventDefault();
 
-  chatWindow.innerHTML = "Connect to the OpenAI API for a response!";
+  chatWindow.textContent = 'Thinking...';
+
+  const products = await loadProducts();
+
+
+  const filteredProducts = products.filter(
+    (product) => localStorage.getItem(product.name) != null
+  );
+
+  messages.push({ role: 'system', content: "You are a sassy L'oreal branded chatbot that helps customers navigate L'Oréal's extensive product catalog and receive tailored recommendations, If a user's query is unrelated to L'Oreal products, respond by stating that you do not know. Generate a Personalized Routine for the user from the products given from the L'Oreal website and answer any follow up questions. The routine should take the form of a plain text list." });
+
+  filteredProducts.forEach((e) => {
+    messages.push({ role: 'user', content: JSON.stringify(e) });
+
+  }
+  )
+
+
+  try {
+    const response = await fetch(workerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+
+
+    const replyText = result.choices[0].message.content;
+    messages.push({ role: 'assistant', content: replyText });
+
+    chatWindow.textContent = replyText;
+
+  } catch (error) {
+    console.error('Error:', error); // Log the error
+    chatWindow.textContent = 'Sorry, something went wrong. Please try again later.'; // Show error message to the user
+  }
+
+  // Clear the input field
+  userInput.value = '';
+})
+
+
+
+/* Chat form submission handler - placeholder for OpenAI integration */
+chatForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  chatWindow.textContent = 'Thinking...';
+  messages.push({ role: 'user', content: userInput.value });
+
+  try {
+    const response = await fetch(workerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        messages: messages,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+
+
+    const replyText = result.choices[0].message.content;
+    messages.push({ role: 'assistant', content: replyText });
+
+    chatWindow.textContent = replyText;
+
+  } catch (error) {
+    console.error('Error:', error); // Log the error
+    chatWindow.textContent = 'Sorry, something went wrong. Please try again later.'; // Show error message to the user
+  }
+
+  // Clear the input field
+  userInput.value = '';
 });
+
+clear = document.getElementById("clear")
+
+clear.addEventListener("click", async (e) => {
+  e.preventDefault();
+  localStorage.clear();
+  SPList.innerHTML = ""
+  highlighted = document.getElementsByClassName("highlight")
+  while (highlighted[0]) {
+    highlighted[0].classList.remove("highlight")
+  }
+})
+
+
+
+
+
+
 
