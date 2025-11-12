@@ -253,3 +253,13 @@ body {
 .generate-btn i {
   margin-right: 8px;
 }
+
+.highlight {
+  border-top: blue;
+  border-width: 20px;
+}
+
+.description {
+  background-color: #000;
+  color: #fff;
+}
